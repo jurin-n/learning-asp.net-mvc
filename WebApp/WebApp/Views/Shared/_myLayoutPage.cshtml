@@ -8,15 +8,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
 
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="css/bootstrap.css?v=20200819" />
+    <link rel="stylesheet" href="@(Request.ApplicationPath=="/"?"":Request.ApplicationPath)/css/bootstrap.css?v=20200819" />
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/style.css?v=20200819" />
+    <link rel="stylesheet" href="@(Request.ApplicationPath=="/"?"":Request.ApplicationPath)/css/style.css?v=20200819" />
 
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="js/jquery-3.5.1.min.js?v=20200819"></script>
-    <script src="js/bootstrap.bundle.min.js?v=20200819"></script>
+    <script src="@(Request.ApplicationPath=="/"?"":Request.ApplicationPath)/js/jquery-3.5.1.min.js?v=20200819"></script>
+    <script src="@(Request.ApplicationPath=="/"?"":Request.ApplicationPath)/js/bootstrap.bundle.min.js?v=20200819"></script>
 
     <title></title>
 </head>
