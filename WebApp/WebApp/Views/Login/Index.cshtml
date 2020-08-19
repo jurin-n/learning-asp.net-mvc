@@ -20,11 +20,10 @@
                         </div>
                         <div class="form-group">
                             <label for="exampleInputPassword1">パスワード</label>
-                            <input type="password" class="form-control @(Model.isValid && ViewData.ModelState.IsValidField("Password")?"":"border-danger")"
-                                   name="Password" value="" />
-                            @Html.ValidationMessageFor(model => model.Password, "", new { @class = "text-danger" })
+                            <input type="password" class="form-control @(Model.isValid?"":"border-danger")" name="Password" value="" />
                         </div>
                         <input type="submit" value="ログイン" class="btn btn-primary" />
+                        <p class="text-danger @(Model.isValid?" invisible":"")">ユーザIDまたはパスワードが正しくありません。</p>
                     </form>
                 </div>
             </div>
