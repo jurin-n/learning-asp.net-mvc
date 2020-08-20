@@ -75,7 +75,37 @@ namespace WebApp.Controllers
                 {
                     BulkRegistration += (i.Id+"\n");
                 }
-                var order = new Order() { OrderId = orderId, OrderDescription="ダミー", BulkRegistration= BulkRegistration, isBulk = true, items = items };
+
+                string OrderId = "";
+                string Description = "";
+
+                using (SqlConnection conn = new SqlConnection(DbHelper.getConnectionString()))
+                {
+                    conn.Open();
+                    String sqlForList = @"
+                        SELECT
+                             OrderID
+                            ,OrderDescription
+                        FROM Orders
+                        WHERE OrderId = @OrderId
+                    ";
+                    using (SqlCommand command = new SqlCommand(sqlForList))
+                    {
+                        command.Parameters.AddWithValue("@OrderId", orderId);
+
+                        command.Connection = conn;
+                        using (SqlDataReader reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                OrderId = (String)reader["OrderId"];
+                                Description = (String)reader["OrderDescription"];
+                            }
+                        }
+                    }
+                }
+
+                var order = new Order() { OrderId = OrderId, OrderDescription= Description, BulkRegistration= BulkRegistration, isBulk = true, items = items };
                 return View(order);
             }
         }
@@ -104,7 +134,7 @@ namespace WebApp.Controllers
                             ,(CASE WHEN Name IS NULL THEN '' ELSE Name END) AS NAME
                             ,(CASE WHEN Description IS NULL THEN '' ELSE Description END) AS Description
                             ,(CASE WHEN Type IS NULL THEN 'NVARCHAR' ELSE Type END) AS Type
-                        FROM Items WHERE ItemID IN(@0,@1,@2,@3,@4)
+                        FROM Items WHERE ItemID IN(@0,@1,@2,@3,@4,@5,@6,@7,@8,@9,@10,@11,@12,@13,@14,@15,@16,@17,@18,@19)
                         ";
 
 
@@ -112,7 +142,7 @@ namespace WebApp.Controllers
                     using (SqlCommand command = new SqlCommand(sql))
                     {
                         //command.Parameters.AddWithValue("@ItemIDs", "'ID001','ID002'");
-                        for (int i = 0; i < 5; i++)
+                        for (int i = 0; i < 20; i++)
                         {
                             command.Parameters.AddWithValue("@" + i.ToString()
                                 , (columns.ElementAtOrDefault(i) == null ? "" : columns.ElementAtOrDefault(i)));

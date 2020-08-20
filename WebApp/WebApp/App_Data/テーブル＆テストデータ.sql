@@ -60,6 +60,9 @@ CONSTRAINT [PK_Orders] PRIMARY KEY CLUSTERED
 
 GO
 
+ALTER TABLE [Orders] ADD OrderDescription varchar(512)
+GO
+
 CREATE TABLE [dbo].[Orders_Items](
     [OrderID] [nvarchar](32) NOT NULL,
     [ItemID] [nvarchar](32) NOT NULL,
