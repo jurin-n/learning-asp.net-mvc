@@ -87,7 +87,7 @@ namespace WebApp.Controllers
                              OrderID
                             ,OrderDescription
                         FROM Orders
-                        WHERE OrderId = @OrderId
+                        WHERE OrderID = @OrderId
                     ";
                     using (SqlCommand command = new SqlCommand(sqlForList))
                     {
