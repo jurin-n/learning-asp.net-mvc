@@ -98,7 +98,7 @@ namespace WebApp.Controllers
                         {
                             while (reader.Read())
                             {
-                                OrderId = (String)reader["OrderId"];
+                                OrderId = (String)reader["OrderID"];
                                 Description = (String)reader["OrderDescription"];
                             }
                         }
