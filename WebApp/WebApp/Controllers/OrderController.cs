@@ -45,7 +45,7 @@ namespace WebApp.Controllers
                             ,(CASE WHEN T2.Type IS NULL THEN 'NVARCHAR' ELSE T2.Type END) AS Type
                         FROM Orders_Items T1 LEFT JOIN Items T2
                         ON T1.ItemID = T2.ItemID
-                        WHERE T1.OrderId = @OrderId ORDER BY T1.No
+                        WHERE T1.OrderID = @OrderId ORDER BY T1.No
                     ";
                     using (SqlCommand command = new SqlCommand(sqlForList))
                     {
