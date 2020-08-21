@@ -18,6 +18,8 @@ GO
 /*
 user01ユーザでSQL Server認証して行う作業
 */
+USE dev
+GO
 --テーブル作成
 CREATE TABLE [dbo].[Users](
     [UserID] [nvarchar](32) NOT NULL,  
@@ -30,13 +32,18 @@ CONSTRAINT [PK_User] PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]) ON [PRIMARY]  
 GO
 
+/*　データ登録 */
+USE dev
+GO
 --データ登録
-INSERT INTO Users (UserId,Name,Password,CreatedOn) Values('test-user','テストユーザ','test-password','2020-07-24');
+INSERT INTO Users (UserID,Name,Password,CreatedOn) Values('test-user','テストユーザ','test-password','2020-07-24');
 
 
 /*
-
+ User関連以外のテーブル
 */
+USE dev
+GO
 CREATE TABLE [dbo].[Items](
     [ItemID] [nvarchar](32) NOT NULL,  
     [Name] [nvarchar](50) NULL,  
@@ -85,7 +92,9 @@ ALTER TABLE [Orders_Items]
 GO
 */
 
-
+/*　データ登録 */
+USE dev
+GO
 --Items
 INSERT INTO [Items](ItemID,Name,Description,CreatedOn,Type) VALUES('ID001','アイテムあああ(更新)','aaa<!--CRLF-->更新<!--CRLF-->更新2','2020-07-25 00:00:00.000','NUMBER');
 INSERT INTO [Items](ItemID,Name,Description,CreatedOn,Type) VALUES('ID002','アイテム００２','説明０１<!--CRLF-->説明０２<!--CRLF-->説明０３<!--CRLF-->説明０４<!--CRLF-->説明０５','2020-07-24 00:00:00.000','NUMBER');
@@ -99,7 +108,7 @@ WHERE Description LIKE '%<!--CRLF-->%'
 ;
 
 --Orders
-INSERT INTO [Orders](OrderID,CreatedOn) VALUES('ORDER001','2020-07-24 00:00:00.000');
+INSERT INTO [Orders](OrderID,OrderDescription,CreatedOn) VALUES('ORDER001','オーダー説明あああ'+CHAR(13)+CHAR(10)+'オーダー説明いいい','2020-07-24 00:00:00.000');
 
 
 --Orders_Items
