@@ -88,7 +88,7 @@
                                         {
                                             <div class="row my-1">
                                                 <div class="col-2 col-lg-1">
-                                                    <input type="text" name="ItemNo" value="@(item.No)" class="form-control form-control-sm" />
+                                                    <input type="text" name="ItemNo" value="@(item.No)" class="form-control form-control-sm" disabled/>
                                                 </div>
                                                 <div class="col-2 col-lg-2">
                                                     <input type="text" name="ItemId" value="@(item.Id)" class="form-control form-control-sm @(item.isValid?" ":" border-danger")" />
@@ -104,13 +104,13 @@
                                                     *@
                                                 </div>
                                                 <div class="col">
-                                                    <input type="text" name="ItemName" value="@(item.Name)" class="form-control form-control-sm" />
+                                                    <input type="text" name="ItemName" value="@(item.Name)" class="form-control form-control-sm" disabled/>
                                                 </div>
                                                 <div class="col-3">
-                                                    <textarea name="ItemDescription" rows="3" class="form-control form-control-sm">@(item.Description)</textarea>
+                                                    <textarea name="ItemDescription" rows="3" class="form-control form-control-sm" disabled>@(item.Description)</textarea>
                                                 </div>
                                                 <div class="col">
-                                                    <select name="ItemType" class="form-control form-control-sm">
+                                                    <select name="ItemType" class="form-control form-control-sm" disabled>
                                                         <option value="NVARCHAR" @*getSelected("NVARCHAR", Item.Type) *@>NVARCHAR</option>
                                                         <option value="NUMBER" @*getSelected("NUMBER", Item.Type) *@>NUMBER</option>
                                                     </select>
@@ -118,6 +118,7 @@
                                             </div>
                                         }
                                     </div>
+                                    @* ひとまず非表示にする。必要になったら表示するため残す。
                                     <div class="item-columns-footer">
                                         <div id="parent-of-addrow" class="parent-of-addrow">
                                             <a id="item-columns-addrow" class="btn btn-outline-primary btn-sm">
@@ -125,6 +126,7 @@
                                             </a>
                                         </div>
                                     </div>
+                                    *@
                                 </div>
                             </div>
                         </div>
