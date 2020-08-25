@@ -119,3 +119,15 @@ INSERT INTO [Orders_Items](OrderID,ItemID,No) VALUES('ORDER001','ID004',4);
 INSERT INTO [Orders_Items](OrderID,ItemID,No) VALUES('ORDER001','ID005',5);
 
 
+
+--アプロード機能用
+CREATE TABLE [dbo].[UploadedFiles](
+    [UploadId] [nvarchar](32) NOT NULL,
+    [UploadBinary] [varbinary](max),
+    [CreatedOn] [datetime] NOT NULL
+CONSTRAINT [PK_UploadedFiles] PRIMARY KEY CLUSTERED   
+(  
+[UploadId] ASC  
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]) ON [PRIMARY]  
+
+GO
