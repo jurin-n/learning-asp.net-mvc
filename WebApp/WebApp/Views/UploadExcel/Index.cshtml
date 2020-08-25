@@ -1,0 +1,24 @@
+﻿
+@{
+    ViewBag.Title = "UploadExcel";
+    Layout = "~/Views/Shared/_myLayoutPage.cshtml";
+}
+
+
+<main>
+    <div class="container mb-auto">
+        <h2>Excelファイルアップロード</h2>
+        <div class="card" style="border: none;">
+            <div class="card-body">
+                <form action="/uploadexcel" enctype="multipart/form-data" method="post">
+                    <div class="form-group">
+                        <p class="h4">ファイル名</p>
+                        <input type="file" name="file" />
+                    </div>
+                    <input type="submit" value='登録' class="btn btn-primary btn-lg" name="upload" />
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+

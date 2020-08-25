@@ -131,3 +131,13 @@ CONSTRAINT [PK_UploadedFiles] PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]) ON [PRIMARY]  
 
 GO
+
+
+CREATE TABLE [dbo].[ExcelSheetData](
+    [cell01] [nvarchar](256) ,
+    [cell02] [nvarchar](256) ,
+    [cell03] [nvarchar](256) ,
+    [cell04] [nvarchar](256) ,
+    [cell05] [nvarchar](256) 
+)
+GO
