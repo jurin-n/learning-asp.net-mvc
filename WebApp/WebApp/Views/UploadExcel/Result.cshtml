@@ -1,0 +1,19 @@
+﻿
+@{
+    ViewBag.Title = "Result";
+    Layout = "~/Views/Shared/_myLayoutPage.cshtml";
+}
+
+<main>
+    <div class="container mb-auto">
+        <div class="card" style="border: none;">
+            <div class="card-body">
+                <h2>アップロード結果</h2>
+                <div class="alert alert-success" role="alert">
+                    @ViewData["uploadedRecordCount"]件、登録完了しました。
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+

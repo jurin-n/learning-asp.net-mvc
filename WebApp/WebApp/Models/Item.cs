@@ -13,5 +13,14 @@ namespace WebApp.Models
         public String Description { get; set; }
         public String Type { get; set; }
         public bool isValid { get; set; }
+
+        public String getSelected( String selectType)
+        {
+            if (this.Type.Equals(selectType))
+            {
+                return "selected";
+            }
+            return "";
+        }
     }
 }

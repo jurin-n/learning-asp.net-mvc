@@ -1,0 +1,72 @@
+﻿@model WebApp.Models.ConfirmItem
+
+@{
+    ViewBag.Title = "Confirm";
+    Layout = "~/Views/Shared/_myLayoutPage.cshtml";
+}
+
+<main>
+    <div class="container mb-auto">
+        <h2>Confirm</h2>
+        <div class="card" style="border: none;">
+            <div class="card-body">
+                <form action="@Url.Action("Confirm", "UploadExcel")" enctype="multipart/form-data" method="post">
+                    <div class="form-group">
+                        <div id="item-columns" class="my-1">
+                            <div class="item-columns-header border-bottom border-light-2">
+                                <div class="row py-3">
+                                    <div class="col-2 col-lg-1">
+                                        No
+                                    </div>
+                                    <div class="col-2 col-lg-2">
+                                        項目ID
+                                    </div>
+                                    <div class="col">
+                                        名称
+                                    </div>
+                                    <div class="col-3">
+                                        説明
+                                    </div>
+                                    <div class="col">
+                                        データ型
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="item-columns-body mb-3">
+                                @foreach (var item in Model.items)
+                                {
+                                    <div class="row my-1">
+                                        <div class="col-2 col-lg-1">
+                                            <input type="text" name="ItemNo" value="@(item.No)" class="form-control form-control-sm"  />
+                                        </div>
+                                        <div class="col-2 col-lg-2">
+                                            <input type="text" name="ItemId" value="@(item.Id)" class="form-control form-control-sm @(item.isValid?" ":" border-danger")" />
+                                            @if (item.isValid==false)
+                                            {
+                                                <p class="text-danger">すでに登録された項目IDのため登録できません。</p>
+                                            }
+                                        </div>
+                                        <div class="col">
+                                            <input type="text" name="ItemName" value="@(item.Name)" class="form-control form-control-sm"  />
+                                        </div>
+                                        <div class="col-3">
+                                            <textarea name="ItemDescription" rows="3" class="form-control form-control-sm" >@(item.Description)</textarea>
+                                        </div>
+                                        <div class="col">
+                                            <select name="ItemType" class="form-control form-control-sm">
+                                                <option value="NVARCHAR" @item.getSelected("NVARCHAR")>NVARCHAR</option>
+                                                <option value="NUMBER" @item.getSelected("NUMBER")>NUMBER</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <input type="submit" value='登録' class="btn btn-primary btn-lg" name="upload" />
+                </form>
+            </div>
+        </div>
+</main>
+
+

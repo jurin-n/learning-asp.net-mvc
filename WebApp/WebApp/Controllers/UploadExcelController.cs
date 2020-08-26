@@ -11,6 +11,8 @@ using DocumentFormat.OpenXml.Spreadsheet;
 using System.Transactions;
 using System.Data.SqlClient;
 using WebApp.Common;
+using WebApp.Models;
+using Item = WebApp.Models.Item;
 
 namespace WebApp.Controllers
 {
@@ -29,6 +31,7 @@ namespace WebApp.Controllers
             if (file != null && file.ContentLength > 0)
             {
 
+                var confirmItem = new ConfirmItem() { items = new List<Item>()};
 
                 // Open file as read-only.
                 using (SpreadsheetDocument SpreadSheet = SpreadsheetDocument.Open(file.InputStream, false))
@@ -38,7 +41,35 @@ namespace WebApp.Controllers
                     Worksheet worksheet = (SpreadSheet.WorkbookPart.GetPartById(sheet.Id.Value) as WorksheetPart).Worksheet;
                     IEnumerable<Row> rows = worksheet.GetFirstChild<SheetData>().Descendants<Row>();
                     bool firstRow = true;
+                    int index = 1;
+                    foreach (Row row in rows)
+                    {
+                        if (firstRow)
+                        {
+                            firstRow = false;
+                        }
+                        else
+                        {
+                            if (row.Descendants<Cell>().ElementAt(0).CellValue == null) 
+                            {
+                                break;
+                            }
+                            confirmItem.items.Add(
+                                new Item() {
+                                    No = index,
+                                    Id = GetCellValue(SpreadSheet, row.Descendants<Cell>().ElementAt(0)),
+                                    Name = GetCellValue(SpreadSheet, row.Descendants<Cell>().ElementAt(1)),
+                                    Description = GetCellValue(SpreadSheet, row.Descendants<Cell>().ElementAt(2)),
+                                    isValid = true,
+                                    Type = GetCellValue(SpreadSheet, row.Descendants<Cell>().ElementAt(3))
+                                }
+                            );
+                            index++;
+                        }
+                    }
 
+                    /*
+                    bool firstRow = true;
                     //トランザクション開始
                     using (TransactionScope scope = new TransactionScope())
                     {
@@ -81,7 +112,9 @@ namespace WebApp.Controllers
                         }
                         scope.Complete();
                     }
+                    */
                 }
+                return View("confirm", confirmItem);
             }
             return View();
         }
@@ -93,6 +126,70 @@ namespace WebApp.Controllers
                 return doc.WorkbookPart.SharedStringTablePart.SharedStringTable.ChildElements.GetItem(int.Parse(value)).InnerText;
             }
             return value;
+        }
+
+        [HttpPost]
+        public ActionResult Confirm(FormCollection form)
+        {
+
+            var confirmItem = new ConfirmItem() { items = new List<Item>() };
+            for (int i = 0; i < form.GetValues("ItemId").Length; i++)
+            {
+                //return View("ErrorResult");
+                confirmItem.items.Add(
+                    new Item()
+                    {
+                        No = int.Parse(form.GetValues("ItemNo")[i]),
+                        Id = form.GetValues("ItemId")[i],
+                        Name = form.GetValues("ItemName")[i],
+                        Description = form.GetValues("ItemDescription")[i],
+                        isValid = false,
+                        Type = form.GetValues("ItemType")[i]
+                    }
+                );
+            }
+
+            //デモ用に適当にエラーになるロジック動くようにする
+            if (form.GetValues("ItemId").Length == 2) { 
+                return View("confirm", confirmItem);
+            }
+
+            //トランザクション開始
+            using (TransactionScope scope = new TransactionScope())
+            {
+                using (SqlConnection conn = new SqlConnection(DbHelper.getConnectionString()))
+                {
+                    String sql = @"
+                            INSERT INTO ExcelSheetData(cell01,cell02,cell03,cell04)
+                            VALUES (@01,@02,@03,@04)
+                            ";
+
+                    conn.Open();
+
+                    for (int i = 0; i < form.GetValues("ItemId").Length; i++)
+                    {
+                        using (SqlCommand command = new SqlCommand(sql))
+                        {
+
+                            command.Connection = conn;
+                            //System.Diagnostics.Debug.WriteLine("----------------");
+                            //System.Diagnostics.Debug.WriteLine(GetCellValue(SpreadSheet,row.Descendants<Cell>().ElementAt(0)));
+                            //System.Diagnostics.Debug.WriteLine(GetCellValue(SpreadSheet,row.Descendants<Cell>().ElementAt(1)));
+                            //System.Diagnostics.Debug.WriteLine(GetCellValue(SpreadSheet,row.Descendants<Cell>().ElementAt(2)));
+                            //System.Diagnostics.Debug.WriteLine(GetCellValue(SpreadSheet,row.Descendants<Cell>().ElementAt(3)));
+                            //System.Diagnostics.Debug.WriteLine(GetCellValue(SpreadSheet,row.Descendants<Cell>().ElementAt(4)));
+                            command.Parameters.AddWithValue("@01", form.GetValues("ItemId")[i]);
+                            command.Parameters.AddWithValue("@02", form.GetValues("ItemName")[i]);
+                            command.Parameters.AddWithValue("@03", form.GetValues("ItemDescription")[i]);
+                            command.Parameters.AddWithValue("@04", form.GetValues("ItemType")[i]);
+                            command.ExecuteNonQuery();
+                        }
+                    }
+                }
+                scope.Complete();
+            }
+            ViewData["uploadedRecordCount"] = form.GetValues("ItemId").Length;
+            return View("result");
         }
     }
 }
