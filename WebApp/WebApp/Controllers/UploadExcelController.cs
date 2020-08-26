@@ -123,7 +123,7 @@ namespace WebApp.Controllers
             string value = cell.CellValue.InnerText;
             if (cell.DataType != null && cell.DataType.Value == CellValues.SharedString)
             {
-                return doc.WorkbookPart.SharedStringTablePart.SharedStringTable.ChildElements.GetItem(int.Parse(value)).InnerText;
+                return doc.WorkbookPart.SharedStringTablePart.SharedStringTable.ChildElements.GetItem(int.Parse(value)).FirstChild.InnerText;
             }
             return value;
         }
