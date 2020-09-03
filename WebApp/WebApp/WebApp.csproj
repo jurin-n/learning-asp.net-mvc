@@ -137,6 +137,7 @@
     <Compile Include="Controllers\OrderController.cs" />
     <Compile Include="Controllers\UploadController.cs" />
     <Compile Include="Controllers\UploadExcelController.cs" />
+    <Compile Include="Filters\CustomAuthenticationFilter.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>

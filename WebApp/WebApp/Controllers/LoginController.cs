@@ -17,7 +17,7 @@ namespace WebApp.Controllers
         }
 
         [HttpPost]
-        public ActionResult Index(User user)
+        public ActionResult Index(User user, String url)
         {
             if (ModelState.IsValid)
             {
@@ -26,7 +26,12 @@ namespace WebApp.Controllers
                 {
                     //認証成功した場合
                     Session["UserId"] = user.UserId;
-                    return Redirect("order");
+
+                    if (string.IsNullOrEmpty(url))
+                    {
+                        return Redirect("order");
+                    }
+                    return Redirect(url);
                 }
             }
             user.isValid = false;

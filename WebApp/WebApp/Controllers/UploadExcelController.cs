@@ -13,9 +13,11 @@ using System.Data.SqlClient;
 using WebApp.Common;
 using WebApp.Models;
 using Item = WebApp.Models.Item;
+using WebApp.Filters;
 
 namespace WebApp.Controllers
 {
+    [CustomAuthenticationFilter]
     public class UploadExcelController : Controller
     {
         // GET: UploadExcel
