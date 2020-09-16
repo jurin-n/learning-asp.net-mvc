@@ -141,3 +141,23 @@ CREATE TABLE [dbo].[ExcelSheetData](
     [cell05] [nvarchar](256) 
 )
 GO
+
+
+--セッション管理機能用
+CREATE TABLE [dbo].[Sessions](
+  [SessionId]       [nvarchar](80)  NOT NULL,
+  [ApplicationName] [nvarchar](255) NOT NULL,
+  [Created]         [datetime]  NOT NULL,
+  [Expires]         [datetime]  NOT NULL,
+  [LockDate]        [datetime]  NOT NULL,
+  [LockId]          [int]       NOT NULL,
+  [Timeout]         [int]       NOT NULL,
+  [Locked]          [bit]       NOT NULL,
+  [SessionItems]    [nvarchar](1024),
+  [Flags]           [int]       NOT NULL
+CONSTRAINT [PK_Sessions] PRIMARY  KEY CLUSTERED
+(
+[SessionId],
+[ApplicationName]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]) ON [PRIMARY]  
+

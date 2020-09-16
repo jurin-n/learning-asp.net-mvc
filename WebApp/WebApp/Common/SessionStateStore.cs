@@ -37,6 +37,12 @@ namespace WebApp.Common
 
         public override SessionStateStoreData GetItemExclusive(HttpContext context, string id, out bool locked, out TimeSpan lockAge, out object lockId, out SessionStateActions actions)
         {
+            return GetSessionStoreItem(true, context, id, out locked, out lockAge, out lockId, out actions);
+        }
+
+        private SessionStateStoreData GetSessionStoreItem(bool lockRecord, HttpContext context, string id, out bool locked, out TimeSpan lockAge, out object lockId, out SessionStateActions actions) 
+        {
+            SessionStateStoreData item;
             //TODO:正しい値で設定する。
             lockAge = TimeSpan.Zero;
             lockId = null;
@@ -44,7 +50,9 @@ namespace WebApp.Common
             actions = 0;
 
             int timeout = 1000;
-            return new SessionStateStoreData(new SessionStateItemCollection(), SessionStateUtility.GetSessionStaticObjects(context), timeout );
+
+            item = new SessionStateStoreData(new SessionStateItemCollection(), SessionStateUtility.GetSessionStaticObjects(context), timeout);
+            return item;
         }
 
         public override void InitializeRequest(HttpContext context)
@@ -65,7 +73,7 @@ namespace WebApp.Common
 
         public override void ResetItemTimeout(HttpContext context, string id)
         {
-            throw new NotImplementedException();
+            //実装せず
         }
 
         public override void SetAndReleaseItemExclusive(HttpContext context, string id, SessionStateStoreData item, object lockId, bool newItem)
