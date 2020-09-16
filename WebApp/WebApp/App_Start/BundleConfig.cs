@@ -8,9 +8,10 @@ namespace WebApp
         // バンドルの詳細については、https://go.microsoft.com/fwlink/?LinkId=301862 を参照してください
         public static void RegisterBundles(BundleCollection bundles)
         {
-            bundles.Add(new ScriptBundle("~/bundles/jquery").Include(
-                        "~/Scripts/jquery-{version}.js"));
+            bundles.Add(new ScriptBundle("~/bundles/js/jquery").Include(
+                        "~/Scripts/js/jquery-{version}.min.js"));
 
+            /*
             bundles.Add(new ScriptBundle("~/bundles/jqueryval").Include(
                         "~/Scripts/jquery.validate*"));
 
@@ -18,13 +19,18 @@ namespace WebApp
             // 運用の準備が完了したら、https://modernizr.com のビルド ツールを使用し、必要なテストのみを選択します。
             bundles.Add(new ScriptBundle("~/bundles/modernizr").Include(
                         "~/Scripts/modernizr-*"));
+            */
 
-            bundles.Add(new ScriptBundle("~/bundles/bootstrap").Include(
-                      "~/Scripts/bootstrap.js"));
+            bundles.Add(new ScriptBundle("~/bundles/js/bootstrap-bundle").Include(
+                      "~/Scripts/js/bootstrap.bundle.min.js"));
 
-            bundles.Add(new StyleBundle("~/Content/css").Include(
-                      "~/Content/bootstrap.css",
-                      "~/Content/site.css"));
+            bundles.Add(new StyleBundle("~/bundles/css/bootstrap").Include(
+                      "~/Content/css/bootstrap.css"));
+
+            bundles.Add(new StyleBundle("~/bundles/css/custom-style").Include(
+                      "~/Content/css/custom-style.css"));
+
+            BundleTable.EnableOptimizations = true;
         }
     }
 }
