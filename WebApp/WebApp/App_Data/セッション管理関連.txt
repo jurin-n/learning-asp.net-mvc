@@ -1,0 +1,6 @@
+﻿### 参考資料
+https://docs.microsoft.com/en-us/previous-versions/aspnet/ms178586(v=vs.100)#sql-server-mode
+
+### Session-State Modes が SQLServerの時に実行するコマンド
+C:\Windows\Microsoft.NET\Framework64\v4.0.30319\aspnet_regsql -S localhost\SQLEXPRESS -E -ssadd -sstype c -d dev
+　＝＞このコマンドでdevデーターベースにテーブル２個とストアド約20本作成。
