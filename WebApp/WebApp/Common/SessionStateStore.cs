@@ -1,11 +1,44 @@
-﻿using System;
+﻿using DocumentFormat.OpenXml.Wordprocessing;
+using System;
+using System.Collections.Specialized;
+using System.Configuration;
+using System.Configuration.Provider;
+using System.Diagnostics;
 using System.Web;
+using System.Web.Configuration;
 using System.Web.SessionState;
 
 namespace WebApp.Common
 {
     public class SessionStateStore : SessionStateStoreProviderBase
     {
+        private string connectionString;
+        private string applicationName;
+        private double timeout;
+
+        public override void Initialize(string name, NameValueCollection config)
+        {
+            if (config == null)
+            {
+                throw new ArgumentNullException("config");
+            }
+            base.Initialize(name, config);
+
+            // セッション管理で使うDBの接続文字列設定
+            connectionString = ConfigurationManager.ConnectionStrings[config["connectionStringName"]].ConnectionString;
+            if (String.IsNullOrEmpty(connectionString))
+            {
+                throw new ProviderException("Connection string cannot be blank.");
+            }
+
+            // アプリケーション名設定
+            applicationName = System.Web.Hosting.HostingEnvironment.ApplicationVirtualPath;
+
+            // セッションタイムアウト時間設定
+            SessionStateSection state = (SessionStateSection)WebConfigurationManager.GetSection("system.web/sessionState");
+            timeout = state.Timeout.TotalMinutes;
+        }
+
         public override SessionStateStoreData CreateNewStoreData(HttpContext context, int timeout)
         {
             throw new NotImplementedException();

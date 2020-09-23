@@ -149,6 +149,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="App_Data\セッション管理関連.txt" />
     <Content Include="App_Data\テーブル＆テストデータ.sql" />
     <Content Include="App_Data\データベース作成.sql" />
     <Content Include="Content\_old\bootstrap-grid.css" />
