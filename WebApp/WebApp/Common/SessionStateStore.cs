@@ -1,9 +1,11 @@
-﻿using DocumentFormat.OpenXml.Wordprocessing;
-using System;
+﻿using System;
 using System.Collections.Specialized;
 using System.Configuration;
 using System.Configuration.Provider;
-using System.Diagnostics;
+using System.Data;
+using System.Data.SqlClient;
+using System.IO;
+using System.Transactions;
 using System.Web;
 using System.Web.Configuration;
 using System.Web.SessionState;
@@ -14,7 +16,7 @@ namespace WebApp.Common
     {
         private string connectionString;
         private string applicationName;
-        private double timeout;
+        private SessionStateSection pConfig = null;
 
         public override void Initialize(string name, NameValueCollection config)
         {
@@ -34,19 +36,26 @@ namespace WebApp.Common
             // アプリケーション名設定
             applicationName = System.Web.Hosting.HostingEnvironment.ApplicationVirtualPath;
 
-            // セッションタイムアウト時間設定
-            SessionStateSection state = (SessionStateSection)WebConfigurationManager.GetSection("system.web/sessionState");
-            timeout = state.Timeout.TotalMinutes;
+            //
+            // Get <sessionState> configuration element.
+            //
+            pConfig = (SessionStateSection)WebConfigurationManager.GetSection("system.web/sessionState");
         }
 
         public override SessionStateStoreData CreateNewStoreData(HttpContext context, int timeout)
         {
-            throw new NotImplementedException();
+            return new SessionStateStoreData(new SessionStateItemCollection(),
+               SessionStateUtility.GetSessionStaticObjects(context),
+               timeout);
         }
 
         public override void CreateUninitializedItem(HttpContext context, string id, int timeout)
         {
-            throw new NotImplementedException();
+            //cookielessモード使わないので実装予定なし
+            //　参考）https://docs.microsoft.com/en-us/dotnet/api/system.web.sessionstate.sessionstatestoreproviderbase.createuninitializeditem?redirectedfrom=MSDN&view=netframework-4.8#System_Web_SessionState_SessionStateStoreProviderBase_CreateUninitializedItem_System_Web_HttpContext_System_String_System_Int32_
+            //throw new NotImplementedException();
+            //Cookielessモードにしてないのになぜか呼ばれるので例外スローするのやめてみる。
+            //Debug.WriteLine("CreateUninitializedItem");
         }
 
         public override void Dispose()
@@ -70,22 +79,124 @@ namespace WebApp.Common
 
         public override SessionStateStoreData GetItemExclusive(HttpContext context, string id, out bool locked, out TimeSpan lockAge, out object lockId, out SessionStateActions actions)
         {
-            return GetSessionStoreItem(true, context, id, out locked, out lockAge, out lockId, out actions);
-        }
 
-        private SessionStateStoreData GetSessionStoreItem(bool lockRecord, HttpContext context, string id, out bool locked, out TimeSpan lockAge, out object lockId, out SessionStateActions actions) 
-        {
-            SessionStateStoreData item;
-            //TODO:正しい値で設定する。
+            //return GetSessionStoreItem(true, context, id, out locked, out lockAge, out lockId, out actions);
+
+            DateTime now = DateTime.Now;
+            // DateTime to check if current session item is expired.
+            DateTime expires;
+            // String to hold serialized SessionStateItemCollection.
+            string serializedItems = null;
+            // Timeout value from the data store.
+            int timeout = 0;
+
+            locked = false;
             lockAge = TimeSpan.Zero;
             lockId = null;
-            locked = true;
-            actions = 0;
+            actions = SessionStateActions.None;
 
-            int timeout = 1000;
+            //トランザクション開始
+            using (TransactionScope scope = new TransactionScope())
+            {
+                using (SqlConnection conn = new SqlConnection(connectionString))
+                {
+                    conn.Open();
 
-            item = new SessionStateStoreData(new SessionStateItemCollection(), SessionStateUtility.GetSessionStaticObjects(context), timeout);
-            return item;
+                    // セッション情報取得
+                    using (SqlCommand command = new SqlCommand())
+                    {
+                        command.Connection = conn;
+
+                        //セッション情報取得
+                        command.CommandText = @"
+SELECT Expires, SessionItems, Locked, LockId, LockDate, Timeout
+FROM Sessions
+WHERE SessionId = @SessionId
+  AND ApplicationName = @ApplicationName
+  AND Expires > @Now
+";
+                        command.Parameters.AddWithValue("@SessionId", id);
+                        command.Parameters.AddWithValue("@ApplicationName", applicationName);
+                        command.Parameters.AddWithValue("@Now", now);
+                        using (var reader = command.ExecuteReader(CommandBehavior.SingleRow))
+                        {
+                            if(reader.Read())
+                            {
+                                expires = reader.GetDateTime(0);
+                                serializedItems = reader.GetString(1);
+                                locked = reader.GetBoolean(2);
+                                lockId = reader.GetInt32(3);
+                                lockAge = DateTime.Now.Subtract(reader.GetDateTime(4));
+                                timeout = reader.GetInt32(5);
+                            }
+                        }
+                    }
+
+                    //セッション情報が有効期限切れの場合、削除
+                    using (SqlCommand command = new SqlCommand())
+                    {
+                        command.Connection = conn;
+                        command.CommandText = @"
+DELETE FROM Sessions
+WHERE SessionId = @SessionId
+  AND ApplicationName = @ApplicationName
+  AND Expires <= @Now
+";
+                        command.Parameters.AddWithValue("@SessionId", id);
+                        command.Parameters.AddWithValue("@ApplicationName", applicationName);
+                        command.Parameters.AddWithValue("@Now", now);
+                        command.ExecuteNonQuery();
+                    }
+                }
+                scope.Complete();
+            }
+
+
+            if (serializedItems == null)
+            {
+                return null;
+            }
+            else
+            {
+                if (locked)
+                {
+                    return null;
+                }
+                else
+                {
+                    lockId = (int)lockId + 1;
+
+                    //トランザクション開始
+                    using (TransactionScope scope = new TransactionScope())
+                    {
+                        using (SqlConnection conn = new SqlConnection(connectionString))
+                        {
+                            conn.Open();
+                            using (SqlCommand command = new SqlCommand())
+                            {
+
+                                command.Connection = conn;
+                                command.CommandText = @"
+UPDATE Sessions
+SET LockId = @LockId
+   ,Locked = @Locked
+   ,LockDate = @LockDate
+WHERE SessionId = @SessionId
+  AND ApplicationName = @ApplicationName
+";
+                                command.Parameters.AddWithValue("@LockId", lockId);
+                                command.Parameters.AddWithValue("@Locked", true);
+                                command.Parameters.AddWithValue("@LockDate", now);
+                                command.Parameters.AddWithValue("@SessionId", id);
+                                command.Parameters.AddWithValue("@ApplicationName", applicationName);
+                                command.ExecuteNonQuery();
+                            }
+                        }
+                        scope.Complete();
+                    }
+                    return Deserialize(context, serializedItems, timeout);
+                }
+            }
         }
 
         public override void InitializeRequest(HttpContext context)
@@ -95,8 +206,36 @@ namespace WebApp.Common
 
         public override void ReleaseItemExclusive(HttpContext context, string id, object lockId)
         {
-            //実装するか迷い中。
-            //throw new NotImplementedException();
+            //トランザクション開始
+            using (TransactionScope scope = new TransactionScope())
+            {
+                using (SqlConnection conn = new SqlConnection(connectionString))
+                {
+                    conn.Open();
+
+                    //有効期限切れのセッション削除
+                    using (SqlCommand command = new SqlCommand())
+                    {
+                        command.Connection = conn;
+                        command.CommandText = @"
+UPDATE Sessions
+SET Locked = @Locked
+   ,Expires = @Expires 
+WHERE SessionId = @SessionId
+  AND ApplicationName = @ApplicationName
+  AND LockId = @LockId
+";
+                        command.Parameters.AddWithValue("@Locked", false);
+                        command.Parameters.AddWithValue("@Expires", DateTime.Now.AddMinutes(pConfig.Timeout.TotalMinutes));
+                        command.Parameters.AddWithValue("@SessionId", id);
+                        command.Parameters.AddWithValue("@ApplicationName", applicationName);
+                        command.Parameters.AddWithValue("@LockId", lockId);
+
+                        command.ExecuteNonQuery();
+                    }
+                }
+                scope.Complete();
+            }
         }
 
         public override void RemoveItem(HttpContext context, string id, object lockId, SessionStateStoreData item)
@@ -111,13 +250,141 @@ namespace WebApp.Common
 
         public override void SetAndReleaseItemExclusive(HttpContext context, string id, SessionStateStoreData item, object lockId, bool newItem)
         {
-            System.Diagnostics.Debug.WriteLine(item.Items["UserId"]); //セッションに設定した内容が取れること確認。
-            throw new NotImplementedException();
+            //System.Diagnostics.Debug.WriteLine(item.Items["UserId"]); //セッションに設定した内容が取れること確認。
+            // セッション情報を直列化
+            string sessItems = Serialize((SessionStateItemCollection)item.Items);
+
+
+            if (newItem)
+            {
+                //トランザクション開始
+                using (TransactionScope scope = new TransactionScope())
+                {
+                    using (SqlConnection conn = new SqlConnection(connectionString))
+                    {
+                        conn.Open();
+
+                        //有効期限切れのセッション削除
+                        using (SqlCommand command = new SqlCommand())
+                        {
+                            command.Connection = conn;
+                            command.CommandText = @"
+DELETE FROM Sessions WHERE SessionId = @SessionId AND ApplicationName = @ApplicationName AND Expires < @Expires
+";
+                            command.Parameters.AddWithValue("@SessionId", id);
+                            command.Parameters.AddWithValue("@ApplicationName", applicationName);
+                            command.Parameters.AddWithValue("@Expires", DateTime.Now);
+
+                            command.ExecuteNonQuery();
+                        }
+
+                        //新規セッション追加
+                        using (SqlCommand command = new SqlCommand())
+                        {
+                            command.Connection = conn;
+                            command.CommandText = @"
+INSERT INTO Sessions (SessionId, ApplicationName, Created, Expires, LockDate, LockId, Timeout, Locked, SessionItems, Flags)
+Values(@SessionId, @ApplicationName, @Created, @Expires, @LockDate, @LockId, @Timeout, @Locked, @SessionItems, @Flags)
+";
+                            command.Parameters.AddWithValue("@SessionId", id);
+                            command.Parameters.AddWithValue("@ApplicationName", applicationName);
+                            command.Parameters.AddWithValue("@Created", DateTime.Now);
+                            command.Parameters.AddWithValue("@Expires", DateTime.Now.AddMinutes((Double)item.Timeout));
+                            command.Parameters.AddWithValue("@LockDate", DateTime.Now);
+                            command.Parameters.AddWithValue("@LockId", 0);
+                            command.Parameters.AddWithValue("@Timeout", item.Timeout);
+                            command.Parameters.AddWithValue("@Locked",false);
+                            command.Parameters.AddWithValue("@SessionItems", sessItems);
+                            command.Parameters.AddWithValue("@Flags", SessionStateActions.None);
+
+                            command.ExecuteNonQuery();
+                        }
+                    }
+                    scope.Complete();
+                }
+            }
+            else
+            {
+                //トランザクション開始
+                using (TransactionScope scope = new TransactionScope())
+                {
+                    using (SqlConnection conn = new SqlConnection(connectionString))
+                    {
+                        //既存セッション更新
+                        using (SqlCommand command = new SqlCommand())
+                        {
+                            conn.Open();
+
+                            command.Connection = conn;
+                            command.CommandText = @"
+UPDATE Sessions
+SET Expires = @Expires, SessionItems = @SessionItems, Locked = @Locked
+WHERE SessionId = @SessionId AND ApplicationName = @ApplicationName AND LockId = @LockId
+";
+                            command.Parameters.AddWithValue("@SessionId", id);
+                            command.Parameters.AddWithValue("@ApplicationName", applicationName);
+
+                            command.Parameters.AddWithValue("@LockId", lockId);
+                            command.Parameters.AddWithValue("@SessionItems", sessItems);
+                            command.Parameters.AddWithValue("@Expires", DateTime.Now.AddMinutes((Double)item.Timeout));
+
+                            command.Parameters.AddWithValue("@Locked", false);
+
+                            command.ExecuteNonQuery();
+                        }
+                    }
+                    scope.Complete();
+                }
+            }
         }
 
         public override bool SetItemExpireCallback(SessionStateItemExpireCallback expireCallback)
         {
             throw new NotImplementedException();
+        }
+
+        // セッション情報をDB登録するため直列化(オブジェクトを文字列に変換)
+        private string Serialize(SessionStateItemCollection items)
+        {
+            byte[] b;
+
+            using (MemoryStream ms = new MemoryStream())
+            {
+                using (BinaryWriter writer = new BinaryWriter(ms))
+                {
+                    if (items != null)
+                        items.Serialize(writer);
+                }
+                b = ms.ToArray();
+            }
+
+            return Convert.ToBase64String(b);
+        }
+
+        //
+        // DeSerialize is called by the GetSessionStoreItem method to 
+        // convert the Base64 string stored in the Access Memo field to a 
+        // SessionStateItemCollection.
+        //
+
+        private SessionStateStoreData Deserialize(HttpContext context,
+          string serializedItems, int timeout)
+        {
+            MemoryStream ms =
+              new MemoryStream(Convert.FromBase64String(serializedItems));
+
+            SessionStateItemCollection sessionItems =
+              new SessionStateItemCollection();
+
+            if (ms.Length > 0)
+            {
+                BinaryReader reader = new BinaryReader(ms);
+                sessionItems = SessionStateItemCollection.Deserialize(reader);
+            }
+
+            return new SessionStateStoreData(sessionItems,
+              SessionStateUtility.GetSessionStaticObjects(context),
+              timeout);
         }
     }
 }
