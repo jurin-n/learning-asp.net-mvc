@@ -77,6 +77,8 @@ namespace WebApp.Common
             throw new NotImplementedException("System.Web.Configuration.PagesSection クラスのプロパティEnableSessionState がread-onlyにすることを想定しないため実装していません。");
         }
 
+
+        //DBからセッション取得＆セッション情報ロック
         public override SessionStateStoreData GetItemExclusive(HttpContext context, string id, out bool locked, out TimeSpan lockAge, out object lockId, out SessionStateActions actions)
         {
 
@@ -204,6 +206,8 @@ WHERE SessionId = @SessionId
             //実装せず
         }
 
+
+        //ロック解除
         public override void ReleaseItemExclusive(HttpContext context, string id, object lockId)
         {
             //トランザクション開始
@@ -212,8 +216,6 @@ WHERE SessionId = @SessionId
                 using (SqlConnection conn = new SqlConnection(connectionString))
                 {
                     conn.Open();
-
-                    //有効期限切れのセッション削除
                     using (SqlCommand command = new SqlCommand())
                     {
                         command.Connection = conn;
@@ -248,6 +250,8 @@ WHERE SessionId = @SessionId
             //実装せず
         }
 
+
+        //セッションをDB登録または更新
         public override void SetAndReleaseItemExclusive(HttpContext context, string id, SessionStateStoreData item, object lockId, bool newItem)
         {
             //System.Diagnostics.Debug.WriteLine(item.Items["UserId"]); //セッションに設定した内容が取れること確認。
@@ -361,12 +365,7 @@ WHERE SessionId = @SessionId AND ApplicationName = @ApplicationName AND LockId =
             return Convert.ToBase64String(b);
         }
 
-        //
-        // DeSerialize is called by the GetSessionStoreItem method to 
-        // convert the Base64 string stored in the Access Memo field to a 
-        // SessionStateItemCollection.
-        //
-
+        // セッション情報を復元(文字列をオブジェクトに戻す)
         private SessionStateStoreData Deserialize(HttpContext context,
           string serializedItems, int timeout)
         {
