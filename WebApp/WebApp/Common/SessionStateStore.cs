@@ -242,7 +242,31 @@ WHERE SessionId = @SessionId
 
         public override void RemoveItem(HttpContext context, string id, object lockId, SessionStateStoreData item)
         {
-            throw new NotImplementedException();
+            //トランザクション開始
+            using (TransactionScope scope = new TransactionScope())
+            {
+                using (SqlConnection conn = new SqlConnection(connectionString))
+                {
+                    conn.Open();
+
+                    //有効期限切れのセッション削除
+                    using (SqlCommand command = new SqlCommand())
+                    {
+                        command.Connection = conn;
+                        command.CommandText = @"
+DELETE FROM Sessions
+WHERE SessionId = @SessionId
+  AND ApplicationName = @ApplicationName
+  AND LockId = @LockId
+";
+                        command.Parameters.AddWithValue("@SessionId", id);
+                        command.Parameters.AddWithValue("@ApplicationName", applicationName);
+                        command.Parameters.AddWithValue("@LockId", lockId);
+                        command.ExecuteNonQuery();
+                    }
+                }
+                scope.Complete();
+            }
         }
 
         public override void ResetItemTimeout(HttpContext context, string id)
