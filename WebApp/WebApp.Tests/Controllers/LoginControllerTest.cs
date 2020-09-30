@@ -14,6 +14,7 @@ namespace WebApp.Tests.Controllers
         {
             var execPath = AppDomain.CurrentDomain.BaseDirectory;
             var appRoot = execPath.Substring(0, execPath.IndexOf("bin"));
+            //using (IWebDriver driver = new EdgeDriver())
             using (IWebDriver driver = new EdgeDriver(appRoot + "selenium_WebDrivers"))
             //using (IWebDriver driver = new ChromeDriver(appRoot + "selenium_WebDrivers"))
             {
