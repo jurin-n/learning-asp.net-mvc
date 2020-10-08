@@ -27,8 +27,13 @@ namespace WebApp.Controllers
         }
 
         [HttpPost]
-        public ActionResult Index(HttpPostedFileBase file)
+        public ActionResult Index(FormCollection form, HttpPostedFileBase file)
         {
+            String Id = form.GetValues("Id")[0];
+            String Description = form.GetValues("Description")[0];
+
+            //System.Diagnostics.Debug.WriteLine(Id);
+            //System.Diagnostics.Debug.WriteLine(Description);
 
             if (file != null && file.ContentLength > 0)
             {
